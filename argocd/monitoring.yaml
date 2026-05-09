@@ -1,0 +1,83 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 65.1.0
+    helm:
+      releaseName: kube-prometheus-stack
+      values: |
+        # ---- Grafana ----
+        grafana:
+          enabled: true
+          adminUser: admin
+          adminPassword: "TaskMaster@2026!"
+          service:
+            type: LoadBalancer
+          persistence:
+            enabled: true
+            storageClassName: gp2
+            size: 10Gi
+
+        # ---- Prometheus ----
+        prometheus:
+          prometheusSpec:
+            retention: 15d
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: gp2
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 50Gi
+
+        # ---- Alertmanager ----
+        alertmanager:
+          enabled: true
+          alertmanagerSpec:
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: gp2
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 10Gi
+
+        # ---- Node Exporter ----
+        nodeExporter:
+          enabled: true
+
+        # ---- kube-state-metrics ----
+        kubeStateMetrics:
+          enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m0s

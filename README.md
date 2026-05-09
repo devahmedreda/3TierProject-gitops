@@ -17,7 +17,8 @@ taskmaster-gitops/
 │   ├── mongo-configmap.yaml
 │   └── mongosecret.yaml
 ├── argocd/
-│   └── application.yaml    # ArgoCD Application definition
+│   ├── application.yaml    # ArgoCD Application (app workloads)
+│   └── monitoring.yaml     # ArgoCD Application (Prometheus + Grafana)
 └── terraform/              # AWS Infrastructure as Code
     ├── main.tf
     ├── variables.tf
@@ -55,6 +56,35 @@ terraform apply
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-# Apply the ArgoCD Application
+# Apply the ArgoCD Applications
 kubectl apply -f argocd/application.yaml
+kubectl apply -f argocd/monitoring.yaml
 ```
+
+## Monitoring Stack
+
+Cluster monitoring is managed by **ArgoCD** using `kube-prometheus-stack` Helm chart — fully GitOps.
+
+ArgoCD auto-syncs the monitoring stack from `argocd/monitoring.yaml`, which includes:
+
+| Component              | Purpose                      |
+|------------------------|------------------------------|
+| **Prometheus**         | Metrics collection & storage |
+| **Grafana**            | Dashboards & visualization   |
+| **Alertmanager**       | Alerting & notifications     |
+| **Node Exporter**      | Host-level metrics           |
+| **kube-state-metrics** | Kubernetes object metrics    |
+
+### Accessing Dashboards
+
+```bash
+# Grafana (via LoadBalancer)
+kubectl get svc -n monitoring kube-prometheus-stack-grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+
+# Prometheus UI (port-forward)
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
+
+# Alertmanager UI (port-forward)
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-alertmanager 9093:9093
+```
+
