@@ -9,8 +9,7 @@ spec:
   project: default
 
   source:
-    # ⚠️ Replace with your actual GitOps repo URL
-    repoURL: https://github.com/devahmedreda/taskmaster-gitops.git
+    repoURL: https://github.com/devahmedreda/3TierProject-gitops.git
     targetRevision: main
     path: k8s
 
