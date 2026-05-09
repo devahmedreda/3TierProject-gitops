@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskMaster Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:#0d1117; color:#e6edf3; min-height:100vh; padding:40px 20px; }
+  h1 { text-align:center; font-size:28px; font-weight:800; margin-bottom:8px;
+    background:linear-gradient(135deg,#58a6ff,#bc8cff,#f78166);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .subtitle { text-align:center; color:#8b949e; font-size:14px; margin-bottom:40px; }
+  .diagram { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:24px; }
+  .row { display:grid; gap:20px; }
+  .row-cicd { grid-template-columns:repeat(4,1fr); }
+  .row-gitops { grid-template-columns:1fr 2fr 1fr; }
+  .row-cluster { grid-template-columns:1fr; }
+  .row-infra { grid-template-columns:repeat(3,1fr); }
+
+  .card { border-radius:16px; padding:20px; position:relative; overflow:hidden;
+    border:1px solid rgba(255,255,255,0.06); transition:transform .2s,box-shadow .2s; }
+  .card:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,0.4); }
+  .card h3 { font-size:14px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .card p { font-size:12px; color:#8b949e; line-height:1.5; }
+  .card .icon { font-size:20px; }
+
+  .cicd { background:linear-gradient(135deg,rgba(137,87,229,.15),rgba(137,87,229,.05));
+    border-color:rgba(137,87,229,.3); }
+  .cicd h3 { color:#bc8cff; }
+
+  .gitops { background:linear-gradient(135deg,rgba(88,166,255,.15),rgba(88,166,255,.05));
+    border-color:rgba(88,166,255,.3); }
+  .gitops h3 { color:#58a6ff; }
+
+  .app { background:linear-gradient(135deg,rgba(63,185,80,.15),rgba(63,185,80,.05));
+    border-color:rgba(63,185,80,.3); }
+  .app h3 { color:#3fb950; }
+
+  .mon { background:linear-gradient(135deg,rgba(247,129,102,.15),rgba(247,129,102,.05));
+    border-color:rgba(247,129,102,.3); }
+  .mon h3 { color:#f78166; }
+
+  .infra { background:linear-gradient(135deg,rgba(121,192,255,.15),rgba(121,192,255,.05));
+    border-color:rgba(121,192,255,.3); }
+  .infra h3 { color:#79c0ff; }
+
+  .section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:2px;
+    padding:6px 14px; border-radius:20px; display:inline-block; margin-bottom:16px; }
+  .sl-cicd { background:rgba(137,87,229,.2); color:#bc8cff; }
+  .sl-gitops { background:rgba(88,166,255,.2); color:#58a6ff; }
+  .sl-cluster { background:rgba(63,185,80,.2); color:#3fb950; }
+  .sl-infra { background:rgba(121,192,255,.2); color:#79c0ff; }
+
+  .arrow-row { display:flex; justify-content:center; align-items:center; padding:4px 0; }
+  .arrow { color:#484f58; font-size:24px; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+  .cluster-box { border:2px solid rgba(63,185,80,.2); border-radius:20px; padding:24px;
+    background:rgba(63,185,80,.03); }
+  .cluster-title { font-size:16px; font-weight:700; color:#3fb950; margin-bottom:16px;
+    display:flex; align-items:center; gap:8px; }
+  .ns-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .ns-box { border-radius:12px; padding:16px; }
+  .ns-box h4 { font-size:13px; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .ns-box .component { font-size:12px; color:#8b949e; padding:4px 8px; border-radius:6px;
+    margin:3px 0; display:flex; align-items:center; gap:6px; }
+
+  .ns-app { background:rgba(63,185,80,.08); border:1px solid rgba(63,185,80,.2); }
+  .ns-app h4 { color:#3fb950; }
+  .ns-app .component { background:rgba(63,185,80,.1); }
+
+  .ns-mon { background:rgba(247,129,102,.08); border:1px solid rgba(247,129,102,.2); }
+  .ns-mon h4 { color:#f78166; }
+  .ns-mon .component { background:rgba(247,129,102,.1); }
+
+  .ns-argo { background:rgba(88,166,255,.08); border:1px solid rgba(88,166,255,.2); }
+  .ns-argo h4 { color:#58a6ff; }
+  .ns-argo .component { background:rgba(88,166,255,.1); }
+
+  .metrics-note { font-size:11px; color:#f78166; margin-top:12px; padding:8px 12px;
+    border-radius:8px; background:rgba(247,129,102,.08); border:1px dashed rgba(247,129,102,.3);
+    text-align:center; }
+
+  .legend { display:flex; gap:20px; justify-content:center; margin-top:30px; flex-wrap:wrap; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:#8b949e; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; }
+</style>
+</head>
+<body>
+
+<h1>TaskMaster — 3-Tier GitOps Architecture</h1>
+<p class="subtitle">AWS EKS • ArgoCD • Prometheus & Grafana • GitHub Actions CI/CD</p>
+
+<div class="diagram">
+
+  <!-- CI/CD -->
+  <div>
+    <span class="section-label sl-cicd">⚡ CI/CD Pipeline</span>
+    <div class="row row-cicd">
+      <div class="card cicd">
+        <h3><span class="icon">👨‍💻</span> Developer</h3>
+        <p>Pushes code to app repo</p>
+      </div>
+      <div class="card cicd">
+        <h3><span class="icon">📦</span> GitHub App Repo</h3>
+        <p>Source code for Frontend & Backend</p>
+      </div>
+      <div class="card cicd">
+        <h3><span class="icon">⚙️</span> GitHub Actions</h3>
+        <p>Build Docker images, push to ECR, update GitOps repo</p>
+      </div>
+      <div class="card cicd">
+        <h3><span class="icon">🐳</span> AWS ECR</h3>
+        <p>Container registry for Frontend & Backend images</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-row"><span class="arrow">▼ updates image tag ▼</span></div>
+
+  <!-- GitOps -->
+  <div>
+    <span class="section-label sl-gitops">🔄 GitOps Engine</span>
+    <div class="row row-gitops">
+      <div class="card gitops">
+        <h3><span class="icon">📋</span> GitOps Repo</h3>
+        <p>K8s manifests + ArgoCD apps<br>• k8s/*.yaml<br>• argocd/application.yaml<br>• argocd/monitoring.yaml</p>
+      </div>
+      <div class="card gitops" style="text-align:center;">
+        <h3 style="justify-content:center;"><span class="icon">🔁</span> ArgoCD</h3>
+        <p>Watches GitOps repo → auto-syncs to EKS<br><br>
+          <strong style="color:#58a6ff;">Two Applications:</strong><br>
+          🟢 taskmaster-app → three-tier-app ns<br>
+          🟠 kube-prometheus-stack → monitoring ns</p>
+      </div>
+      <div class="card gitops">
+        <h3><span class="icon">📡</span> Helm Charts</h3>
+        <p>prometheus-community repo<br>• kube-prometheus-stack<br>• v65.1.0</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-row"><span class="arrow">▼ deploys & syncs ▼</span></div>
+
+  <!-- EKS Cluster -->
+  <div>
+    <span class="section-label sl-cluster">☸️ AWS EKS Cluster</span>
+    <div class="cluster-box">
+      <div class="cluster-title">☸️ taskmaster-eks (Kubernetes 1.29)</div>
+      <div class="ns-grid">
+        <!-- App Namespace -->
+        <div class="ns-box ns-app">
+          <h4>🟢 three-tier-app</h4>
+          <div class="component">🌐 Frontend (Nginx) — LoadBalancer</div>
+          <div class="component">⚙️ Backend (Node.js) — ClusterIP:8081</div>
+          <div class="component">🍃 MongoDB — ClusterIP:27017 + PVC</div>
+        </div>
+        <!-- Monitoring Namespace -->
+        <div class="ns-box ns-mon">
+          <h4>🟠 monitoring</h4>
+          <div class="component">📊 Prometheus — 50Gi storage, 15d retention</div>
+          <div class="component">📈 Grafana — LoadBalancer</div>
+          <div class="component">🔔 Alertmanager — 10Gi storage</div>
+          <div class="component">🖥️ Node Exporter</div>
+          <div class="component">📋 kube-state-metrics</div>
+        </div>
+        <!-- ArgoCD Namespace -->
+        <div class="ns-box ns-argo" style="grid-column:1/3;">
+          <h4>🔵 argocd</h4>
+          <div style="display:flex;gap:8px;">
+            <div class="component">🔁 ArgoCD Server</div>
+            <div class="component">📦 Repo Server</div>
+            <div class="component">🎛️ Application Controller</div>
+          </div>
+        </div>
+      </div>
+      <div class="metrics-note">
+        📡 Prometheus scrapes metrics from all namespaces (app pods, nodes, kube-state, ArgoCD)
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-row"><span class="arrow">▼ provisioned by ▼</span></div>
+
+  <!-- Infrastructure -->
+  <div>
+    <span class="section-label sl-infra">🏗️ Infrastructure (Terraform)</span>
+    <div class="row row-infra">
+      <div class="card infra">
+        <h3><span class="icon">🌐</span> VPC</h3>
+        <p>10.0.0.0/16<br>Public & Private subnets<br>NAT Gateway</p>
+      </div>
+      <div class="card infra">
+        <h3><span class="icon">☸️</span> EKS</h3>
+        <p>Managed node group<br>t3.medium (1-3 nodes)<br>EBS CSI Driver + IRSA</p>
+      </div>
+      <div class="card infra">
+        <h3><span class="icon">🐳</span> ECR</h3>
+        <p>taskmaster-backend<br>taskmaster-frontend<br>Image lifecycle policies</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#bc8cff;"></div> CI/CD</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#58a6ff;"></div> GitOps</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950;"></div> Application</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f78166;"></div> Monitoring</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#79c0ff;"></div> Infrastructure</div>
+</div>
+
+</body>
+</html>

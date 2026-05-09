@@ -68,7 +68,7 @@ Cluster monitoring is managed by **ArgoCD** using `kube-prometheus-stack` Helm c
 ArgoCD auto-syncs the monitoring stack from `argocd/monitoring.yaml`, which includes:
 
 | Component              | Purpose                      |
-|------------------------|------------------------------|
+| ---------------------- | ---------------------------- |
 | **Prometheus**         | Metrics collection & storage |
 | **Grafana**            | Dashboards & visualization   |
 | **Alertmanager**       | Alerting & notifications     |
@@ -87,4 +87,3 @@ kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:909
 # Alertmanager UI (port-forward)
 kubectl port-forward -n monitoring svc/kube-prometheus-stack-alertmanager 9093:9093
 ```
-
