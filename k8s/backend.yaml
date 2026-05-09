@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/taskmaster-backend:latest
+          image: 287216490922.dkr.ecr.us-east-1.amazonaws.com/taskmaster-backend:fd45ed0480c7cb74dda3a89375970e5063e7eb0d
           ports:
             - containerPort: 8081
           env:
