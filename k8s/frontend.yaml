@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/taskmaster-frontend:latest
+          image: 287216490922.dkr.ecr.us-east-1.amazonaws.com/taskmaster-frontend:2016543a22fac8f58ce5402bd9b3b764cc907b1d
           ports:
             - containerPort: 80
           resources:
