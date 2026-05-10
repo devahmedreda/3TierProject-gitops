@@ -1,4 +1,5 @@
 # TaskMaster GitOps
+<img width="1024" height="1024" alt="aws-architecture" src="https://github.com/user-attachments/assets/81a8cf0f-6b5c-4580-9a29-c5495369d617" />
 
 Kubernetes manifests, ArgoCD configuration, and Terraform infrastructure for the TaskMaster 3-Tier application.
 
