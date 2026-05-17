@@ -64,7 +64,7 @@ kubectl apply -f argocd/monitoring.yaml
 
 ## Monitoring Stack
 
-Cluster monitoring is managed by **ArgoCD** using `kube-prometheus-stack` Helm chart — fully GitOps.
+Cluster monitoring is managed by **ArgoCD** using `kube-prometheus-stack` Helm chart - fully GitOps.
 
 ArgoCD auto-syncs the monitoring stack from `argocd/monitoring.yaml`, which includes:
 
